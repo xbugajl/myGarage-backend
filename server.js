@@ -1,28 +1,45 @@
 const express = require('express');
-const app = express();
+const http = require('http');
+const socketIo = require('socket.io');
+const connectDB = require('./config/db');
+const authRoutes = require('./routes/auth');
+const garageRoutes = require('./routes/garages');
+const vehicleRoutes = require('./routes/vehicles');
+const taskRoutes = require('./routes/tasks');
+const chatRoutes = require('./routes/chat');
+const ChatMessage = require('./models/ChatMessage');
 
-// Allow JSON data to be sent to the server
+const app = express();
+const server = http.createServer(app);
+const io = socketIo(server);
+
+connectDB();
 app.use(express.json());
 
-// Fake "database" (just an array for now)
-let garages = [];
+app.use('/api/auth', authRoutes);
+app.use('/api/garages', garageRoutes);
+app.use('/api/vehicles', vehicleRoutes);
+app.use('/api/tasks', taskRoutes);
+app.use('/api/chat', chatRoutes);
 
-// GET: See all garages
-app.get('/api/garages', (req, res) => {
-  res.json(garages);
+io.on('connection', (socket) => {
+  console.log('New client connected');
+
+  socket.on('joinGarage', (garageId) => {
+    socket.join(garageId);
+  });
+
+  socket.on('sendMessage', async (data) => {
+    const { garageId, message, senderId } = data;
+    const chatMessage = new ChatMessage({ sender: senderId, garage: garageId, message });
+    await chatMessage.save();
+    io.to(garageId).emit('message', chatMessage);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('Client disconnected');
+  });
 });
 
-// POST: Add a new garage
-app.post('/api/garages', (req, res) => {
-  const newGarage = {
-    id: garages.length + 1,
-    name: req.body.name,
-    location: req.body.location,
-  };
-  garages.push(newGarage);
-  res.status(201).json(newGarage);
-});
-
-app.listen(5000, () => {
-  console.log('Server is running on port 5000');
-});
+const PORT = process.env.PORT || 5000;
+server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
