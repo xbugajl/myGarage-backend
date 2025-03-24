@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const connectDB = async () => {
   try {
-    await mongoose.connect('mongodb://localhost:27017/mygarage', {
+    await mongoose.connect('mongodb://localhost:27017/mygarage', { // URI na pripojenie na DB
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });

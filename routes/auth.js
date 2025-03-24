@@ -26,9 +26,18 @@ router.post('/register', async (req, res) => {
   try {
     let user = await User.findOne({ email });
     if (user) return res.status(400).json({ message: 'User already exists' });
+    
+    let role = "admin";
+    if(inviteCode){
+        const validCode = await Invitecode({code : inviteCode});
+        if(!validCode){
+            return res.status(400).json({ message: 'Invalid invite code' });
+        }
+        role = "user";
+    }
 
     // In a real app, validate inviteCode here
-    user = new User({ name, email, password, role: 'user' });
+    user = new User({ name, email, password, role});
     const salt = await bcrypt.genSalt(10);
     user.password = await bcrypt.hash(password, salt);
     await user.save();
