@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const Garage = require('../models/Garage');
+const createInviteCode = require('./invite');
 
 router.get('/', auth, async (req, res) => {
   if (req.user.role !== 'admin') return res.status(403).json({ message: 'Access denied' });
@@ -36,5 +37,14 @@ router.get('/:id', auth, async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
-
+router.post('/invite', auth, async (req, res) => {
+  if(req.user.role !== 'admin') return res.status(403).json({message: 'Access denied'});
+  createInviteCode(24)
+      .then(invite => {
+        return res.status(201).json({inviteCode : invite})
+      })
+      .catch(err => {
+        console.error(err);
+      });
+});
 module.exports = router;

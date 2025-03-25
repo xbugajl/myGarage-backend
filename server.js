@@ -1,13 +1,14 @@
 const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
-const connectDB = require('./config/db');
-const authRoutes = require('./routes/auth');
-const garageRoutes = require('./routes/garages');
-const vehicleRoutes = require('./routes/vehicles');
-const taskRoutes = require('./routes/tasks');
-const chatRoutes = require('./routes/chat');
-const ChatMessage = require('./models/ChatMessage');
+const connectDB = require('./config/db.js');
+const authRoutes = require('./routes/auth.js');
+const garageRoutes = require('./routes/garages.js');
+const vehicleRoutes = require('./routes/vehicles.js');
+const taskRoutes = require('./routes/tasks.js');
+const chatRoutes = require('./routes/chat.js');
+const ChatMessage = require('./models/ChatMessage.js');
+
 
 const app = express();
 const server = http.createServer(app);
