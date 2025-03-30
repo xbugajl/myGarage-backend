@@ -8,6 +8,7 @@ const vehicleRoutes = require('./routes/vehicles.js');
 const taskRoutes = require('./routes/tasks.js');
 const chatRoutes = require('./routes/chat.js');
 const ChatMessage = require('./models/ChatMessage.js');
+const inviteRoutes = require('./routes/invite.js');
 
 
 const app = express();
@@ -22,6 +23,8 @@ app.use('/api/garages', garageRoutes);
 app.use('/api/vehicles', vehicleRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/chat', chatRoutes);
+app.use('/api/invite', inviteRoutes);
+
 
 io.on('connection', (socket) => {
   console.log('New client connected');

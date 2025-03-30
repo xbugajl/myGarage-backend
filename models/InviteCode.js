@@ -17,6 +17,7 @@ const inviteCodeSchema = new mongoose.Schema({
         type: Boolean,
         default: false,
     },
+    garage: {type: mongoose.Schema.Types.ObjectId, ref: 'Garage', required: true} // <- tu som doplnil garaz nech user je viazany k garazi
 });
 //schema na ukladanie invite kodu
 module.exports = mongoose.model('InviteCode', inviteCodeSchema);
