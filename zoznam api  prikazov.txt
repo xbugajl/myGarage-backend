@@ -1,0 +1,115 @@
+Po spusteni servera lokalne je mozne otestovat tieto ukony
+Berme do uvahy ze nam server bezi lokalne na porte 5000
+
+// REGISTER
+Registrovat pouzivatela je mozne 2ma sposobmi
+1. Pouzivatel sa registruje ako admin resp majitel garaze. V tomto pripade sa nevyplna invitation code
+// priklad api volania
+http://localhost:5000/api/auth/register <- api volanie
+
+body volania :
+{
+   "name": "Frantisek Verny",
+  "email": "fverny@gmail.com",
+  "password": "ferko123",
+  "inviteCode": ""
+  }
+  resposne: 
+  {
+    "message": "User registered"
+}
+
+V pripade registracie ako user, teda boli sme pozvany majitelom garaze vyplname aj invite code
+ body volania:
+ {
+    "name": "Adrian Susedny",
+  "email": "asusedny@example.com",
+  "password": "qer123!23malinovo",
+  "inviteCode": "c4c1cb9c"
+  }
+  resposne: {
+    "message": "User registered"
+}
+// LOGIN
+Pouzivatel sa moze prihlasit pomocou emailu a hesla
+// priklad api volania
+http://localhost:5000/api/auth/login
+
+body volania:
+{
+  "email": "admin@gmal.com",
+  "password": "admin"
+  }
+response: 
+{
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjdlOTJhZWNmYjYzNGYyOWZkZjgxZDI0Iiwicm9sZSI6ImFkbWluIn0sImlhdCI6MTc0MzQ0NjM5MCwiZXhwIjoxNzQzNDQ5OTkwfQ.zI4j3YvaSZ4iEWIqi0GqoGLNENw04rTHZWAM05QmTiE"
+} <-- tento token je velmi dolezity. Skrz neho prebieha cela autentifikacia uzivatela. Token ma zivotnost 1 hodinu. (Neviem mozno sa to zmeni este)
+
+// TVORBA GARAZE 
+Bez vytvorenej garaze nemozeme pozyvat pouzivatelov resp. userov pretoze ich nemame k comu priradit
+// priklad api volania
+http://localhost:5000/api/garages
+body volania :
+{
+  "name": "Garaz pri dunaji",
+  "location": "Bratislava 1"
+  
+}
+DO HEADERU JE POTREBNE PRIDAT AUTENTIFIKACNY TOKEN KTORY OBDRZIME PRI PRIHLASENI
+--> x-auth-token : eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjdkZmYyZjYwM2IwNTE2ODUwMzU2OGVhIiwicm9sZSI6ImFkbWluIn0sImlhdCI6MTc0MzI0NjgzMiwiZXhwIjoxNzQzMjUwNDMyfQ.o-QrvCSHwpRkuDjkHaKwKk1C8KY369CMtNSq4gOvwG8
+
+resposne: 
+{
+    "name": "Garaz pri dunaji",
+    "location": "Bratislava 1",
+    "admin": "67e92aecfb634f29fdf81d24", <-- ID admina, resp majitela garaze
+    "_id": "67eae8feedcc1c6b68441d07", <-- ID garaze, (potrebne pri pozyvani pouzivatelov a tvorbe vozidiel)
+    "__v": 0
+}
+
+// INVITE POUZIVATELA DO GARAZE
+Pouzivatel je po registracii s invite kodom priamo priradeny do garaze kde bude moct plnit tasky atd
+// priklad api volania
+http://localhost:5000/api/invite
+body volania :
+{
+    "garageId": "67e92b52fb634f29fdf81d29" <-- id garaze do ktorej ho chceme pozvat
+}
+DO HEADERU JE TIEZ POTREBNE PRIDAT AUTORIZACNY TOKEN 
+x-auth-token : eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjdlOTJhZWNmYjYzNGYyOWZkZjgxZDI0Iiwicm9sZSI6ImFkbWluIn0sImlhdCI6MTc0MzQ0NjM5MCwiZXhwIjoxNzQzNDQ5OTkwfQ.zI4j3YvaSZ4iEWIqi0GqoGLNENw04rTHZWAM05QmTiE
+
+response : {
+    "code": "bc09f503", <-- kod ktory sa pouziva pri registracii vid vyssie
+    "expiresAt": "2025-04-01T19:15:12.144Z"
+}
+
+// TVORBA VOZIDLA 
+Vozidlo je tvorenym priamo v garazi kde je uzivatel prihlaseny, taktiez vodzidlo moze vytvorit iba administratot resp. majitel garaze 
+// priklad api volania
+http://localhost:5000/api/vehicles/garage/{garageId} <- v nasom pripade riadok nizsie
+
+http://localhost:5000/api/vehicles/garage/67e92b52fb634f29fdf81d29
+
+body volania :
+{
+  "brand": "Toyota",
+  "model": "Corolla",
+  "year": 2020,
+  "photos": <-- toto je optional
+  // treba dorobit color a ine detaily, to mozno neskor :)
+  "identification": "TS222BA"
+}
+DO HEADERU JE TIEZ POTREBNE PRIDAT AUTORIZACNY TOKEN
+x-auth-token : {tokenUsera}
+
+response : 
+{
+    "brand": "Toyota",
+    "model": "Corolla",
+    "year": 2020,
+    "identification": "TS222BA",
+    "photos": [],
+    "garage": "67e92b52fb634f29fdf81d29",
+    "_id": "67eae41fedcc1c6b68441d05",
+    "__v": 0
+}
