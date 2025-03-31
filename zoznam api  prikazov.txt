@@ -1,6 +1,9 @@
 Po spusteni servera lokalne je mozne otestovat tieto ukony
 Berme do uvahy ze nam server bezi lokalne na porte 5000
 
+$$$$$$$$$$$$$$   POST METODY $$$$$$$$$$$$$$$$$$$$$$$4
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 // REGISTER
 Registrovat pouzivatela je mozne 2ma sposobmi
 1. Pouzivatel sa registruje ako admin resp majitel garaze. V tomto pripade sa nevyplna invitation code
@@ -113,3 +116,32 @@ response :
     "_id": "67eae41fedcc1c6b68441d05",
     "__v": 0
 }
+
+// TVORBA TASKU
+Task je priradeny priamo k vozidlu, resp. k jeho ID. Task moze vytvorit iba admin a splna ho pouzivatel.
+// priklad api volania
+http://localhost:5000/api/tasks/garage/{garageId}/vehicle/{vehicleId}
+
+v nasom pripade 
+http://localhost:5000/api/tasks/garage/67e92b52fb634f29fdf81d29/vehicle/67eae41fedcc1c6b68441d05
+body volania:
+{
+    "description" : "Change oil",
+    "dueDate" : "2025/07/17"
+    
+}
+header: tiez je potrebny x-auth-token
+response: 
+{
+    "description": "Change oil",
+    "dueDate": "2025-07-16T22:00:00.000Z",
+    "vehicle": "67eae41fedcc1c6b68441d05",
+    "status": "pending",
+    "evidence": [],
+    "_id": "67eaf30099831b63667d1786",
+    "__v": 0
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+$$$$$$$$$$$$$$$$$$$$$$$$$$$ GET METODY $$$$$$$$$$$$$$$$$$$$$$$$4
