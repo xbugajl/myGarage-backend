@@ -29,13 +29,14 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
-// GET garageId, toto by som upravil co by iba admin tej garaze a useri tej garaze mali k nej pristup
+// GET garageId, toto by som upravil co by iba admin tej garaze a useri tej garaze mali k nej pristup !DONE!
 router.get('/:id', auth, async (req, res) => {
   try {
     const garage = await Garage.findById(req.params.id).populate('admin', 'name email');
     if (!garage) return res.status(404).json({ message: 'Garage not found' });
-    // For non-admins, ensure that the garage ID in the token matches the requested garage
-    if (req.user.role !== 'admin' && (!req.user.garage || req.user.garage.toString() !== garage._id.toString())) {
+    if (!req.user.garage || req.user.garage.toString() !== garage._id.toString())
+      //toto som zmenil, lebo my mame admina tiez priradeneho k garazi
+      {
       return res.status(403).json({ message: 'Access denied' });
     }
     res.json(garage);

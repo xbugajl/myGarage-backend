@@ -145,3 +145,6 @@ response:
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 $$$$$$$$$$$$$$$$$$$$$$$$$$$ GET METODY $$$$$$$$$$$$$$$$$$$$$$$$4
+//GETNUTIE HISTORIE SPRAV Z GARAZE
+http://localhost:5000/api/chat/garage/{garageId}
+Ziskanie historie chatov z databazy, aby sa mohli nacitat do frontendu

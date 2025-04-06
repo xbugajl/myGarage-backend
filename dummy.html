@@ -1,0 +1,75 @@
+<!--
+No konecne som prisiel na to ako sa v tejto prehistorickej veci robia komenty
+Toto je len taky dummy na otestovanie websocketu ci funguje spravne
+ -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chat Test</title>
+    <style>
+        #messages { height: 300px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; }
+        .message { margin: 5px 0; }
+        .system { color: #666; }
+    </style>
+</head>
+<body>
+<div>
+    <input id="garageId" placeholder="Garage ID" value="garage1">
+    <input id="senderId" placeholder="Your ID" value="user1">
+    <button onclick="joinGarage()">Join Garage</button>
+</div>
+<div id="messages"></div>
+<input id="messageInput" placeholder="Type a message...">
+<button onclick="sendMessage()">Send</button>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.0/socket.io.js"></script>
+<script>
+    const socket = io('http://localhost:5000');
+    const messagesDiv = document.getElementById('messages');
+
+    socket.on('connection', () => {
+        console.log('Connected');
+    });
+
+    socket.on('joined', (msg) => {
+        addMessage(msg, true);
+    });
+
+    socket.on('message', (data) => {
+        addMessage(`${data.sender}: ${data.message}`);
+    });
+
+    socket.on('error', (error) => {
+        addMessage(`Error: ${error}`, true);
+    });
+
+    function addMessage(text, isSystem = false) {
+        const div = document.createElement('div');
+        div.className = 'message' + (isSystem ? ' system' : '');
+        div.textContent = text;
+        messagesDiv.appendChild(div);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    function joinGarage() {
+        const garageId = document.getElementById('garageId').value;
+        socket.emit('joinGarage', garageId);
+    }
+
+    function sendMessage() {
+        const garageId = document.getElementById('garageId').value;
+        const senderId = document.getElementById('senderId').value;
+        const message = document.getElementById('messageInput').value;
+
+        if (message.trim()) {
+            socket.emit('sendMessage', { garageId, message, senderId });
+            document.getElementById('messageInput').value = '';
+        }
+    }
+
+    document.getElementById('messageInput').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') sendMessage();
+    });
+</script>
+</body>
+</html>
