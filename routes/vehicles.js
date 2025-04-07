@@ -3,6 +3,9 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const Vehicle = require('../models/Vehicle');
 const Garage = require('../models/Garage');
+const multer = require('multer');
+
+const upload = multer({ storage: multer.memoryStorage() });
 
 router.get('/garage/:garageId', auth, async (req, res) => {
   try {
@@ -17,22 +20,49 @@ router.get('/garage/:garageId', auth, async (req, res) => {
   }
 });
 
-router.post('/garage/:garageId', auth, async (req, res) => {
-  const { brand, model, year,identification, photos } = req.body;
-  try {
-    const garage = await Garage.findById(req.params.garageId);
-    if (!garage) return res.status(404).json({ message: 'Garage not found' });
-    if (garage.admin.toString() !== req.user.id)
-      return res.status(403).json({ message: 'Access denied' });
-    const vehicle = new Vehicle({ brand, model, year,identification, photos, garage: req.params.garageId });
-    await vehicle.save();
-    res.status(201).json(vehicle);
-  } catch (error) {
-    console.error('Server error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-  
-});
+router.post(
+    '/garage/:garageId',
+    auth,
+    upload.single('photos'), // Expect a file under the key 'photos'
+    async (req, res) => {
+      const { brand, model, year, identification } = req.body;
+
+      try {
+        // Check if the file was uploaded
+        if (!req.file) {
+          return res.status(400).json({ message: 'No photo uploaded' });
+        }
+
+        // Validate garage
+        const garage = await Garage.findById(req.params.garageId);
+        if (!garage) {
+          return res.status(404).json({ message: 'Garage not found' });
+        }
+        if (garage.admin.toString() !== req.user.id) {
+          return res.status(403).json({ message: 'Access denied' });
+        }
+
+        // Create the vehicle with the photo binary data
+        const vehicle = new Vehicle({
+          brand,
+          model,
+          year,
+          identification,
+          photos: {
+            data: req.file.buffer,       // Binary data from multer
+            contentType: req.file.mimetype, // MIME type (e.g., "image/png")
+          },
+          garage: req.params.garageId,
+        });
+
+        await vehicle.save();
+        res.status(201).json(vehicle);
+      } catch (error) {
+        console.error('Server error:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+      }
+    }
+);
 
 
 router.delete('/garage/:garageId/vehicle/:vehicleId', auth, async (req, res) => {
