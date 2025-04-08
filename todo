@@ -1,4 +1,2 @@
 Treba overit vytvaranie vozidiel, taskov, a ich upravu
-treba dokoncit websocket. 
-treba dorobit put metody na vehicle a garaz
-popripade user
+treba dorobit put alebo patch metodu na usera a aj get user nech vieme zobrazovat jeho data 
