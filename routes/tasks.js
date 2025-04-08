@@ -33,22 +33,30 @@ router.post('/garage/:garageId/vehicle/:vehicleId', auth, async (req, res) => {
   }
 });
 
-router.post('/complete/:id', auth, async (req, res) => {
-  const { evidence, latitude, longitude } = req.body;
+router.patch('/tasks/:id/complete', auth, async (req, res) => {
+  const { photos, latitude, longitude } = req.body;
   try {
+    // najdenie tasku podla id
     const task = await Task.findById(req.params.id);
     if (!task) return res.status(404).json({ message: 'Task not found' });
-    if (task.assignedTo.toString() !== req.user.id)
+
+    if (task.assignedTo.toString() !== req.user.id) {
       return res.status(403).json({ message: 'Access denied' });
+    }
+
+    // update fieldov
     task.status = 'completed';
-    task.evidence = evidence || task.evidence;
+    if (photos) task.photos = photos; 
     task.completedAt = Date.now();
-    task.location = { latitude, longitude };
+    if (latitude && longitude) task.location = { latitude, longitude }; 
+
     await task.save();
     res.json(task);
   } catch (error) {
-    res.status(500).json({ message: 'Server error' });
+    console.error('Server error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
+
 
 module.exports = router;

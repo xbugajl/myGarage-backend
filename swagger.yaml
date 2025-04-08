@@ -409,7 +409,7 @@ paths:
             schema:
               type: object
               properties:
-                evidence:
+                photos:
                   type: array
                   items:
                     type: string
