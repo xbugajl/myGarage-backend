@@ -120,7 +120,12 @@ router.put('/garage/:garageId/vehicle/:vehicleId', auth, async (req, res) => {
     if (model) vehicle.model = model;
     if (year) vehicle.year = year;
     if (identification) vehicle.identification = identification;
-    if (photos) vehicle.photos = photos;
+    if (req.file) {
+      vehicle.photos = {
+        data: req.file.buffer,
+        contentType: req.file.mimetype
+      };
+    }
 
     await vehicle.save();
     res.json(vehicle);

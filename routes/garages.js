@@ -65,4 +65,34 @@ router.post('/invite', auth, async (req, res) => {
   }
 });
 
+// PUT update detailov garaze (admin only)
+router.patch('/:id', auth, async (req, res) => {
+  if (req.user.role !== 'admin') 
+    return res.status(403).json({ message: 'Access denied' });
+
+  const { name, location } = req.body;
+
+  try {
+    //najdenie garaze
+    const garage = await Garage.findById(req.params.id);
+    if (!garage) return res.status(404).json({ message: 'Garage not found' });
+
+    // verifikacia ci je pouzivatel admin
+    if (garage.admin.toString() !== req.user.id) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    // update fieldov
+    if (name) garage.name = name;
+    if (location) garage.location = location;
+
+ 
+    await garage.save();
+    res.json(garage);
+  } catch (error) {
+    console.error('Server error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
 module.exports = router;
