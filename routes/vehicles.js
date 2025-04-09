@@ -43,12 +43,11 @@ router.get('/garage/:garageId/vehicle/:vehicleId', auth, async (req, res) => {
 router.post(
     '/garage/:garageId',
     auth,
-    upload.single('photos'), // Expect a file under the key 'photos'
+    upload.single('photos'),
     async (req, res) => {
       const { brand, model, year, identification } = req.body;
 
       try {
-        // Check if the file was uploaded
         if (!req.file) {
           return res.status(400).json({ message: 'No photo uploaded' });
         }
