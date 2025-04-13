@@ -35,9 +35,4 @@ router.put('/update', auth, async (req, res) => {//put na usera na zmenu mena
         });
     }
 });
-router.get('/getuser', auth, async (req, res) => {
-
-})
-
-
 module.exports = router;

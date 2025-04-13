@@ -1,9 +1,9 @@
 openapi: 3.0.0
 info:
-  title: Example Garage Management API
+  title: MyGarage API
   version: "1.0.0"
   description: >
-    This is a sample Swagger/OpenAPI documentation for the combined routes you posted.
+    A Swagger documentation for our MTAA project named MyGarage
 servers:
   - url: http://localhost:5000
     description: Local dev server
@@ -225,7 +225,45 @@ paths:
           description: Garage not found
         "500":
           description: Server error
-
+    patch:
+      summary: Update garage information
+      description: |
+        Allows the admin of a garage to update its name or location.
+        Requires authentication and admin privileges.
+      tags:
+        - Garages
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the garage to update
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "New Garage Name"
+                location:
+                  type: string
+                  example: "Bratislava, Slovakia"
+              required: []
+      responses:
+        '200':
+          description: Garage updated successfully
+        '403':
+          description: Access denied (not admin or not owner of the garage)
+        '404':
+          description: Garage not found
+        '500':
+          description: Server error
   /garages/invite:
     post:
       summary: Generate an invite code for a garage (admin only)
@@ -593,7 +631,63 @@ paths:
           description: Vehicle or garage not found
         "500":
           description: Server error
-
+  #############
+  #USER ROUTES#
+  #############
+  /api/user/update:
+    put:
+      summary: Update user name
+      description: Updates the name of a user identified by their email. Requires authentication.
+      tags:
+        - User
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - name
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: user@example.com
+                name:
+                  type: string
+                  example: "New User Name"
+      responses:
+        '200':
+          description: User name updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: User name updated successfully
+                  user:
+                    type: object
+                    properties:
+                      email:
+                        type: string
+                        format: email
+                      name:
+                        type: string
+                      role:
+                        type: string
+                      garage:
+                        type: string
+        '400':
+          description: Name is required for update
+        '404':
+          description: User not found
+        '500':
+          description: Server error during update
 components:
   securitySchemes:
     bearerAuth:
