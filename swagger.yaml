@@ -256,13 +256,13 @@ paths:
                   example: "Bratislava, Slovakia"
               required: []
       responses:
-        '200':
+        "200":
           description: Garage updated successfully
-        '403':
+        "403":
           description: Access denied (not admin or not owner of the garage)
-        '404':
+        "404":
           description: Garage not found
-        '500':
+        "500":
           description: Server error
   /garages/invite:
     post:
@@ -428,7 +428,7 @@ paths:
           description: Server error
 
   /tasks/complete/{id}:
-    post:
+    patch:
       summary: Mark a task as completed
       tags:
         - Tasks
@@ -660,7 +660,7 @@ paths:
                   type: string
                   example: "New User Name"
       responses:
-        '200':
+        "200":
           description: User name updated successfully
           content:
             application/json:
@@ -682,11 +682,11 @@ paths:
                         type: string
                       garage:
                         type: string
-        '400':
+        "400":
           description: Name is required for update
-        '404':
+        "404":
           description: User not found
-        '500':
+        "500":
           description: Server error during update
 components:
   securitySchemes:
