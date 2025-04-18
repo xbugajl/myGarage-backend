@@ -1,0 +1,2 @@
+.env
+.env.*          # optional: ignores things like .env.local, .env.production
