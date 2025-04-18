@@ -40,6 +40,26 @@ router.get('/garage/:garageId/vehicle/:vehicleId', auth, async (req, res) => {
   }
 });
 
+router.get('/garage/:garageId/vehicle/:vehicleId/photo', auth, async (req, res) => {
+  try {
+    const garage = await Garage.findById(req.params.garageId);
+    if (!garage) return res.status(404).json({ message: 'Garage not found' });
+    if (req.user.role !== 'admin' && garage.admin.toString() !== req.user.id)
+      return res.status(403).json({ message: 'Access denied' });
+
+    const vehicle = await Vehicle.findById(req.params.vehicleId);
+    if (!vehicle) return res.status(404).json({ message: 'Vehicle not found' });
+    if (vehicle.garage.toString() !== req.params.garageId) {
+      return res.status(400).json({ message: 'Vehicle does not belong to this garage' });
+    }
+
+    res.set('Content-Type', vehicle.photos.contentType); // Set MIME type (e.g., image/jpeg)
+    res.send(vehicle.photos.data); // Send binary image data
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 router.post(
     '/garage/:garageId',
     auth,
@@ -75,7 +95,7 @@ router.post(
         });
 
         await vehicle.save();
-        res.status(201).json(vehicle);
+        res.status(201).json({message: "Success"});
       } catch (error) {
         console.error('Server error:', error);
         res.status(500).json({ message: 'Server error', error: error.message });

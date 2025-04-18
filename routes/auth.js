@@ -32,7 +32,7 @@ router.post('/login',  async (req, res) => {
 });
 
 
-router.post('/register', auth, async (req, res) => {
+router.post('/register', async (req, res) => {
   const { name, email, password, inviteCode } = req.body; // inviteCode for admin-generated invites
   try {
     let user = await User.findOne({ email });
