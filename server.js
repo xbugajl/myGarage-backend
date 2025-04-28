@@ -38,7 +38,7 @@ app.use('/api/vehicles', vehicleRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/invite', inviteRoutes);
-app.use('api/user', userRoutes);
+app.use('/api/user', userRoutes);
 /*
 // Serve the client.html file (optional, for testing)
 app.get('/', (req, res) => {
