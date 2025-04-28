@@ -35,4 +35,29 @@ router.put('/update', auth, async (req, res) => {//put na usera na zmenu mena
         });
     }
 });
+router.get('/profile', auth, async (req, res) => {
+    try {
+        // Assuming the auth middleware attaches the user to req.user
+        const user = await User.findById(req.user.id).select('-password'); // Exclude password from response
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.status(200).json({
+            message: 'User profile retrieved successfully',
+            user: {
+                email: user.email,
+                name: user.name,
+                role: user.role,
+                garage: user.garage
+            }
+        });
+    } catch (error) {
+        res.status(500).json({
+            message: 'Server error while retrieving user profile',
+            error: error.message
+        });
+    }
+});
+
 module.exports = router;
