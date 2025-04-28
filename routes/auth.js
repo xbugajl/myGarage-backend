@@ -68,6 +68,28 @@ router.post('/register', async (req, res) => {
   }
 });
 
+router.post('/validate-invite', async (req, res) => {
+  const { code } = req.body;
+  if (!code) return res.status(400).json({ message: 'Invite code required' });
+
+  try {
+    const invite = await InviteCode.findOne({
+      code,
+      used: false,
+      expiresAt: { $gt: new Date() }
+    });
+    if (!invite) {
+      return res.status(400).json({ message: 'Invalid or expired invite code' });
+    }
+
+    // (optional) return invite.garage if the front-end needs it 
+    return res.status(200).json({ message: 'Valid invite code' });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: 'Server error' });
+  }
+});
+
 
 
 module.exports = router;
