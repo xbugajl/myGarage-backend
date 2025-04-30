@@ -49,5 +49,24 @@ router.post('/', auth, async (req, res) => {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
+router.post('/verify', auth, async (req, res) => {
+  const { code } = req.body;
+
+  if (!code) {
+    return res.status(400).json({ message: 'Invite code is required' });
+  }
+
+  try {
+    const result = await verifyInviteCode(code);
+    res.status(200).json({
+      message: 'Invite code verified successfully',
+      garageId: result.garageId,
+      code: result.code,
+      expiresAt: result.expiresAt
+    });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
 
 module.exports = router;
