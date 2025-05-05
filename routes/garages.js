@@ -45,6 +45,28 @@ router.get('/:id', auth, async (req, res) => {
   }
 });
 
+router.get('/admin/me', auth, async (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ message: 'Access denied: Admin role required' });
+  }
+
+  try {
+    // Find all garages where the authenticated user is the admin
+    const garages = await Garage.find({ admin: req.user.id }).populate('admin', 'name email');
+    if (!garages || garages.length === 0) {
+      return res.status(200).json({ message: 'No garages found for this admin', garages: [] });
+    }
+
+    res.status(200).json({
+      message: 'Garages retrieved successfully',
+      garages
+    });
+  } catch (error) {
+    console.error('Error fetching garages for admin:', error);
+    res.status(500).json({ message: 'Server error while retrieving garages' });
+  }
+});
+
 // POST invite 
 // x-auth-token <- v headri je potrebny, v body treba {"garageId":"id"} aby sa vygeneroval kod pre garaz
 router.post('/invite', auth, async (req, res) => {
