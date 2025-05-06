@@ -3,6 +3,7 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const Task = require('../models/Task');
 const Garage = require('../models/Garage');
+const Vehicle = require('../models/Vehicle');   
 //const User = require('../models/User');
 //const { sendPushNotification } = require('../utils/fcm');
 
@@ -15,8 +16,20 @@ router.get('/user', auth, async (req, res) => {
   }
 });
 
+/** GET /api/tasks/vehicle/:vehicleId  – list tasks for that vehicle */
+router.get('/vehicle/:vehicleId', auth, async (req, res) => {
+  try {
+    const tasks = await Task
+      .find({ vehicle: req.params.vehicleId })
+      .sort({ dueDate: 1 });                   // soonest first
+    res.json(tasks);
+  } catch (e) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 router.post('/garage/:garageId/vehicle/:vehicleId', auth, async (req, res) => {
-  const { description, dueDate, assignedTo } = req.body;
+  const { description, dueDate } = req.body;
   try {
     const garage = await Garage.findById(req.params.garageId);
     if (!garage || garage.admin.toString() !== req.user.id) {
