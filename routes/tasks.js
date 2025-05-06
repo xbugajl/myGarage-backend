@@ -39,7 +39,6 @@ router.post('/garage/:garageId/vehicle/:vehicleId', auth, async (req, res) => {
     const task = new Task({
       description,
       dueDate: new Date(dueDate),
-      assignedTo,
       vehicle: req.params.vehicleId,
       garage: req.params.garageId,
       status: 'pending',
@@ -62,9 +61,7 @@ router.patch('/tasks/:id/complete', auth, async (req, res) => {
     const task = await Task.findById(req.params.id);
     if (!task) return res.status(404).json({ message: 'Task not found' });
 
-    if (task.assignedTo.toString() !== req.user.id) {
-      return res.status(403).json({ message: 'Access denied' });
-    }
+    
 
     task.status = 'completed';
     if (photos) task.photos = photos;
