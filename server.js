@@ -13,6 +13,7 @@ const chatRoutes = require('./routes/chat.js');
 const ChatMessage = require('./models/ChatMessage.js');
 const inviteRoutes = require('./routes/invite.js');
 const userRoutes = require('./routes/user.js');
+const setupSocket = require('./socket/socketHandler.js');
 
 // docs
 const swaggerUi = require('swagger-ui-express');
@@ -30,6 +31,8 @@ const io = socketIo(server, {
 connectDB();
 app.use(express.json());
 
+setupSocket(io);
+
 //require('./cron/reminders');
 
 app.use('/api/auth', authRoutes);
@@ -39,22 +42,6 @@ app.use('/api/tasks', taskRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/invite', inviteRoutes);
 app.use('/api/user', userRoutes);
-/*
-// Serve the client.html file (optional, for testing)
-app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/client.html');
-});
-io.use(async (socket, next) => {
-  try {
-    // Add your authentication logic here
-    // Example: const token = socket.handshake.auth.token;
-    // Verify token and attach user to socket
-    next();
-  } catch (error) {
-    next(new Error('Authentication error'));
-  }
-});
-*/
 
 const swaggerDocument = YAML.load('./swagger.yaml');
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
