@@ -9,8 +9,8 @@ const userSchema = new mongoose.Schema({
   deviceToken: { type: String }, // For push notifications
 
   avatar: {
-    data:        Buffer,    // binary
-    contentType: String     // MIME type, e.g. "image/jpeg"
+    data: { type: Buffer, required: false }, // Binary data
+    contentType: { type: String, required: false }, // MIME type
   }
 });
 
