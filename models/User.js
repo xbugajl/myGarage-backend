@@ -7,6 +7,11 @@ const userSchema = new mongoose.Schema({
   role: { type: String, enum: ['admin', 'user'], default: 'user' },
   garage: { type: mongoose.Schema.Types.ObjectId, ref: 'Garage' },
   deviceToken: { type: String }, // For push notifications
+
+  avatar: {
+    data:        Buffer,    // binary
+    contentType: String     // MIME type, e.g. "image/jpeg"
+  }
 });
 
 module.exports = mongoose.model('User', userSchema);

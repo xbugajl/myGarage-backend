@@ -7,21 +7,39 @@ const upload  = multer({ storage: multer.memoryStorage() });
 const auth    = require('../middleware/auth');
 const User    = require('../models/User');
 
-// GET   /api/user/profile
+/**
+ * GET /api/user/profile
+ * Returns user info plus a URL for the avatar if set.
+ */
 router.get('/profile', auth, async (req, res) => {
   try {
-    const user = await User
-      .findById(req.user.id)
-      .select('-password');
+    const user = await User.findById(req.user.id).select('-password');
     if (!user) return res.status(404).json({ message: 'User not found' });
-    res.json({ user });
+
+    // Build full URL to serve the avatar
+    const avatarUrl = user.avatar?.data
+      ? `${req.protocol}://${req.get('host')}/api/user/avatar`
+      : null;
+
+    return res.json({
+      user: {
+        email:     user.email,
+        name:      user.name,
+        role:      user.role,
+        garage:    user.garage,
+        avatarUrl,              // <-- drop this into your profile response
+      }
+    });
   } catch (err) {
-    res.status(500).json({ message: 'Server error' });
+    console.error(err);
+    return res.status(500).json({ message: 'Server error' });
   }
 });
 
-// PUT   /api/user/update
-// multipart if file, otherwise json
+/**
+ * PUT /api/user/update
+ * Accepts multipart (avatar upload) or JSON (name only).
+ */
 router.put(
   '/update',
   auth,
@@ -47,20 +65,42 @@ router.put(
 
       await user.save();
 
-      res.json({
+      // Return the new avatar URL (if any) just as GET /profile does
+      const avatarUrl = user.avatar?.data
+        ? `${req.protocol}://${req.get('host')}/api/user/avatar`
+        : null;
+
+      return res.json({
         message: 'Profile updated',
         user: {
-          email: user.email,
-          name:  user.name,
-          role:  user.role,
-          garage:user.garage
-          // optionally avatar URL here
+          email:     user.email,
+          name:      user.name,
+          role:      user.role,
+          garage:    user.garage,
+          avatarUrl,
         }
       });
     } catch (err) {
-      res.status(500).json({ message: 'Server error', error: err.message });
+      console.error(err);
+      return res.status(500).json({ message: 'Server error', error: err.message });
     }
   }
 );
+
+/**
+ * GET /api/user/avatar
+ * Streams the raw avatar bytes out.
+ */
+router.get('/avatar', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user?.avatar?.data) return res.status(404).end();
+    res.contentType(user.avatar.contentType);
+    res.send(user.avatar.data);
+  } catch (err) {
+    console.error(err);
+    res.status(500).end();
+  }
+});
 
 module.exports = router;
