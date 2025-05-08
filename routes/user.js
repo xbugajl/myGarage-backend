@@ -1,63 +1,66 @@
+// backend/routes/user.js
+
 const express = require('express');
-const router = express.Router();
-const User = require('../models/User');
-const auth = require('../middleware/auth');
+const router  = express.Router();
+const multer  = require('multer');
+const upload  = multer({ storage: multer.memoryStorage() });
+const auth    = require('../middleware/auth');
+const User    = require('../models/User');
 
-
-router.put('/update', auth, async (req, res) => {//put na usera na zmenu mena
-    const { email, name } = req.body;
-    try {
-        let user = await User.findOne({ email });
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-        if (name) {
-            user.name = name;
-        } else {
-            return res.status(400).json({ message: 'Name is required for update' });
-        }
-        await user.save();
-
-        res.status(200).json({
-            message: 'User name updated successfully',
-            user: {
-                email: user.email,
-                name: user.name,
-                role: user.role,
-                garage: user.garage
-            }
-        });
-
-    } catch (error) {
-        res.status(500).json({
-            message: 'Server error during update',
-            error: error.message
-        });
-    }
-});
+// GET   /api/user/profile
 router.get('/profile', auth, async (req, res) => {
-    try {
-        // Assuming the auth middleware attaches the user to req.user
-        const user = await User.findById(req.user.id).select('-password'); // Exclude password from response
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-
-        res.status(200).json({
-            message: 'User profile retrieved successfully',
-            user: {
-                email: user.email,
-                name: user.name,
-                role: user.role,
-                garage: user.garage
-            }
-        });
-    } catch (error) {
-        res.status(500).json({
-            message: 'Server error while retrieving user profile',
-            error: error.message
-        });
-    }
+  try {
+    const user = await User
+      .findById(req.user.id)
+      .select('-password');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json({ user });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
 });
+
+// PUT   /api/user/update
+// multipart if file, otherwise json
+router.put(
+  '/update',
+  auth,
+  upload.single('avatar'),
+  async (req, res) => {
+    try {
+      const user = await User.findById(req.user.id);
+      if (!user) return res.status(404).json({ message: 'User not found' });
+
+      // name is required
+      if (!req.body.name) {
+        return res.status(400).json({ message: 'Name is required' });
+      }
+      user.name = req.body.name;
+
+      // optional avatar upload
+      if (req.file) {
+        user.avatar = {
+          data:        req.file.buffer,
+          contentType: req.file.mimetype
+        };
+      }
+
+      await user.save();
+
+      res.json({
+        message: 'Profile updated',
+        user: {
+          email: user.email,
+          name:  user.name,
+          role:  user.role,
+          garage:user.garage
+          // optionally avatar URL here
+        }
+      });
+    } catch (err) {
+      res.status(500).json({ message: 'Server error', error: err.message });
+    }
+  }
+);
 
 module.exports = router;
