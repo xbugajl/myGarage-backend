@@ -5,6 +5,8 @@ const router  = express.Router();
 const auth    = require('../middleware/auth');
 const Task    = require('../models/Task');
 const Garage  = require('../models/Garage');
+const multer  = require('multer');
+
 
 const upload = multer({ storage: multer.memoryStorage() }).array('evidence', 5);
 // GET tasks for a specific vehicle
@@ -65,7 +67,7 @@ router.get('/:id', auth, async (req, res) => {
 });
 
 // Edit a task (restricted to admins)
-router.put('/:id', auth, upload.single('evidence'), async (req, res) => {
+router.put('/:id', auth, upload, async (req, res) => {
   try {
     const task = await Task.findById(req.params.id);
     if (!task) return res.status(404).json({ message: 'Task not found' });
