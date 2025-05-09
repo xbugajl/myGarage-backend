@@ -77,10 +77,7 @@ router.put('/:id', auth, upload, async (req, res) => {
       return res.status(403).json({ message: 'Only admins can edit tasks' });
     }
 
-    // Check if the user has permission (e.g., vehicle belongs to user's garage)
-    if (task.vehicle.toString() !== req.user.vehicle) {
-      return res.status(403).json({ message: 'Unauthorized' });
-    }
+    
 
     task.name = req.body.name || task.name;
     task.description = req.body.description || task.description;
@@ -173,10 +170,7 @@ router.delete('/:id', auth, async (req, res) => {
       return res.status(403).json({ message: 'Only admins can delete tasks' });
     }
 
-    // Check permission
-    if (task.vehicle.toString() !== req.user.vehicle) {
-      return res.status(403).json({ message: 'Unauthorized' });
-    }
+    
 
     await task.remove();
     res.json({ message: 'Task deleted' });
