@@ -1,6 +1,11 @@
 // /models/Task.js
 const mongoose = require('mongoose');
 
+const imageSchema = new mongoose.Schema({
+  data:        Buffer,
+  contentType: String
+}, { _id: false });
+
 const taskSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -24,7 +29,9 @@ const taskSchema = new mongoose.Schema({
     enum: ['pending', 'completed'],
     default: 'pending'
   },
-  evidence: [String],      // URLs or file paths
+  evidence: {
+    evidence:    [ imageSchema ],       
+  },     
   completedAt: Date,
   location: {             // GPS location when completed
     latitude:  { type: Number },
