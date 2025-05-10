@@ -6,7 +6,26 @@ const multer  = require('multer');
 const upload  = multer({ storage: multer.memoryStorage() });
 const auth    = require('../middleware/auth');
 const User    = require('../models/User');
+/**
+ * GET /api/user/myGarageID
+ * Returns users garage ID, or admin's role because then garage ID is null.
+ */
+router.get('/myGarageID', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('-password');
+    if (!user) return res.status(404).json({ message: 'User not found' });
 
+    return res.json({
+      user: {
+        role:      user.role,
+        garage:    user.garage,
+      }
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: 'Server error' });
+  }
+});
 /**
  * GET /api/user/profile
  * Returns user info plus a URL for the avatar if set.
