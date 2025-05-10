@@ -120,9 +120,7 @@ router.patch('/:id/complete', auth, upload, async (req, res) => {
     const task = await Task.findById(req.params.id);
     if (!task) return res.status(404).json({ message: 'Task not found' });
 
-    const garage = await Garage.findById(task.garage);
-    if (!garage) return res.status(400).json({ message: 'Parent garage not found' });
-
+   
     if (
       req.user.role !== 'admin' &&
       (!req.user.garage || req.user.garage.toString() !== garage._id.toString())
