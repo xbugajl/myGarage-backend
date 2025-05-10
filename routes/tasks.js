@@ -83,11 +83,11 @@ router.put('/:id', auth, upload, async (req, res) => {
     task.description = req.body.description || task.description;
     task.dueDate = req.body.dueDate ? new Date(req.body.dueDate) : task.dueDate;
 
-    if (req.file) {
-      task.evidence = {
-        data: req.file.buffer,
-        contentType: req.file.mimetype,
-      };
+    if (req.files && req.files.length) {
+      task.evidence = req.files.map(f => ({
+        data: f.buffer,
+        contentType: f.mimetype
+      }));
     }
 
     if (req.body.status === 'completed' && task.status !== 'completed') {
@@ -123,7 +123,6 @@ router.patch('/:id/complete', auth, upload, async (req, res) => {
     const garage = await Garage.findById(task.garage);
     if (!garage) return res.status(400).json({ message: 'Parent garage not found' });
 
-    // only admin or same-garage user may complete
     if (
       req.user.role !== 'admin' &&
       req.user.garage.toString() !== garage._id.toString()
@@ -131,22 +130,20 @@ router.patch('/:id/complete', auth, upload, async (req, res) => {
       return res.status(403).json({ message: 'Access denied' });
     }
 
-    task.status      = 'completed';
+    task.status = 'completed';
     task.completedAt = new Date();
 
-    // if any files were uploaded, push them into the array
     if (req.files && req.files.length) {
-      const images = req.files.map(f => ({
-        data:        f.buffer,
+      const newImages = req.files.map(f => ({
+        data: f.buffer,
         contentType: f.mimetype
       }));
-      // either replace or append—here we append:
-      task.evidence.push(...images);
+      task.evidence = [...task.evidence, ...newImages]; // Append new images
     }
 
     if (req.body.latitude && req.body.longitude) {
       task.location = {
-        latitude:  parseFloat(req.body.latitude),
+        latitude: parseFloat(req.body.latitude),
         longitude: parseFloat(req.body.longitude)
       };
     }
