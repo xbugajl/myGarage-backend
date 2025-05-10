@@ -10,6 +10,6 @@ const vehicleSchema = new mongoose.Schema({
     contentType: { type: String, required: false }, // MIME type
   },
   garage: { type: mongoose.Schema.Types.ObjectId, ref: 'Garage', required: true },
-});
+}); // only test
 vehicleSchema.index({ garage: 1 });
 module.exports = mongoose.model('Vehicle', vehicleSchema);
