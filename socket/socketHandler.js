@@ -1,6 +1,7 @@
 ﻿const express = require('express');
 const app = express();
 const server = require('http').createServer(app);
+const ChatMessage = require('../models/ChatMessage');
 function setupSocket(io){
     io.on('connection', (socket) => {
         console.log(`New client connected: ${socket.id}`);

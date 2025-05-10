@@ -17,6 +17,7 @@ router.get('/myGarageID', auth, async (req, res) => {
 
     return res.json({
       user: {
+        id:        user._id,
         role:      user.role,
         garage:    user.garage,
       }
