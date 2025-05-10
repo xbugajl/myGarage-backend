@@ -11,5 +11,5 @@ const vehicleSchema = new mongoose.Schema({
   },
   garage: { type: mongoose.Schema.Types.ObjectId, ref: 'Garage', required: true },
 });
-
+vehicleSchema.index({ garage: 1 });
 module.exports = mongoose.model('Vehicle', vehicleSchema);
