@@ -30,12 +30,16 @@ const taskSchema = new mongoose.Schema({
     default: 'pending'
   },
   evidence: {
-    evidence:    [ imageSchema ],       
+    evidence: [imageSchema],       
   },     
   completedAt: Date,
   location: {             // GPS location when completed
     latitude:  { type: Number },
     longitude: { type: Number }
+  },
+  completionComment: {
+    type: String,
+    required: false
   }
 });
 

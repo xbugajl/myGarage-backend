@@ -148,6 +148,10 @@ router.patch('/:id/complete', auth, upload, async (req, res) => {
       };
     }
 
+    if (req.body.completionComment) {
+      task.completionComment = req.body.completionComment;
+    }
+
     await task.save();
     res.json({ message: 'Task completed', task });
   } catch (err) {

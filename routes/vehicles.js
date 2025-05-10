@@ -5,20 +5,30 @@ const Vehicle = require('../models/Vehicle');
 const Garage = require('../models/Garage');
 const multer = require('multer');
 
-const upload = multer({ storage: multer.memoryStorage() });
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits:  { fileSize: 8 * 1024 * 1024 }, // 8 MB guard
+});
 // get na vsetky vozidla v garazi
 router.get('/garage/:garageId', auth, async (req, res) => {
-  try {
-    const garage = await Garage.findById(req.params.garageId);
-    if (!garage) return res.status(404).json({ message: 'Garage not found' });
-    if (req.user.role !== 'admin' && garage.admin.toString() !== req.user.id)
-      return res.status(403).json({ message: 'Access denied' });
-    const vehicles = await Vehicle.find({ garage: req.params.garageId });
-    res.json(vehicles);
-  } catch (error) {
-    res.status(500).json({ message: 'Server error' });
-  }
-});
+    try {
+      const garage = await Garage.findById(req.params.garageId);
+      if (!garage) return res.status(404).json({ message: 'Garage not found' });
+  
+      // allow if they're the admin or if their user.garage matches
+      const isAdmin  = garage.admin.toString() === req.user.id;
+      const isMember = req.user.garage?.toString() === req.params.garageId;
+      if (!isAdmin && !isMember) {
+        return res.status(403).json({ message: 'Access denied' });
+      }
+  
+      const vehicles = await Vehicle.find({ garage: req.params.garageId });
+      res.json(vehicles);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: 'Server error' });
+    }
+  });
 
 // get na jedno vozidlo, vhodne pri zobrazovani informacii o vozidle 
 router.get('/garage/:garageId/vehicle/:vehicleId', auth, async (req, res) => {
