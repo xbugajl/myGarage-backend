@@ -123,7 +123,7 @@ router.patch('/:id/complete', auth, upload, async (req, res) => {
    
     if (
       req.user.role !== 'admin' &&
-      (!req.user.garage || req.user.garage.toString() !== garage._id.toString())
+      (req.user.garage.toString() !== garage._id.toString())
     ) {
       return res.status(403).json({ message: 'Access denied' });
     }
