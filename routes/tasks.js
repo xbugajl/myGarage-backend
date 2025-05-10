@@ -169,7 +169,7 @@ router.delete('/:id', auth, async (req, res) => {
 
     
 
-    await task.remove();
+    await task.deleteOne();
     res.json({ message: 'Task deleted' });
   } catch (err) {
     console.error(err);
