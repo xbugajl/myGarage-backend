@@ -117,13 +117,18 @@ router.put('/:id', auth, upload, async (req, res) => {
 
 router.patch('/:id/complete', auth, upload, async (req, res) => {
   try {
-    const task = await Task.findById(req.params.id);
+    const task = await Task.findById(req.params.id).populate({
+      path: 'vehicle',
+      populate: {
+        path: 'garage' // Assuming your Vehicle model has a 'garage' field referencing the Garage model
+      }
+    });
     if (!task) return res.status(404).json({ message: 'Task not found' });
 
-   
+    // Now you can access the garage information through task.vehicle.garage
     if (
       req.user.role !== 'admin' &&
-      (req.user.garage.toString() !== garage._id.toString())
+      (!task.vehicle || !task.vehicle.garage || req.user.garage.toString() !== task.vehicle.garage._id.toString())
     ) {
       return res.status(403).json({ message: 'Access denied' });
     }
@@ -136,7 +141,7 @@ router.patch('/:id/complete', auth, upload, async (req, res) => {
         data: f.buffer,
         contentType: f.mimetype
       }));
-      task.evidence = [...task.evidence, ...newImages]; // Append new images
+      task.evidence.push(...newImages); // Use push to add to the array
     }
 
     if (req.body.latitude && req.body.longitude) {
