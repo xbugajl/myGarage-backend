@@ -7,6 +7,7 @@ const Task    = require('../models/Task');
 const Garage  = require('../models/Garage');
 const multer  = require('multer');
 const { sendExpoPush } = require('../utils/expoPush');
+const User = require('../models/User');
 
 const upload = multer({ storage: multer.memoryStorage() }).array('evidence', 5);
 // GET tasks for a specific vehicle
@@ -130,12 +131,12 @@ router.patch('/:id/complete', auth, upload, async (req, res) => {
     const task = await Task.findById(req.params.id).populate({
       path: 'vehicle',
       populate: {
-        path: 'garage' // Assuming your Vehicle model has a 'garage' field referencing the Garage model
+        path: 'garage'
       }
     });
     if (!task) return res.status(404).json({ message: 'Task not found' });
 
-    // Now you can access the garage information through task.vehicle.garage
+    // Authorization check
     if (
       req.user.role !== 'admin' &&
       (!task.vehicle || !task.vehicle.garage || req.user.garage.toString() !== task.vehicle.garage._id.toString())
@@ -143,17 +144,27 @@ router.patch('/:id/complete', auth, upload, async (req, res) => {
       return res.status(403).json({ message: 'Access denied' });
     }
 
+    // Set task as completed
     task.status = 'completed';
     task.completedAt = new Date();
 
+    // Handle evidence images (if provided)
     if (req.files && req.files.length) {
       const newImages = req.files.map(f => ({
         data: f.buffer,
         contentType: f.mimetype
       }));
-      task.evidence.push(...newImages); // Use push to add to the array
+      // Initialize task.evidence if it doesn't exist
+      if (!task.evidence) {
+        task.evidence = { evidence: [] };
+      } else if (!Array.isArray(task.evidence.evidence)) {
+        task.evidence.evidence = [];
+      }
+      // Push new images into the nested evidence array
+      task.evidence.evidence.push(...newImages);
     }
 
+    // Handle location (if provided)
     if (req.body.latitude && req.body.longitude) {
       task.location = {
         latitude: parseFloat(req.body.latitude),
@@ -161,6 +172,7 @@ router.patch('/:id/complete', auth, upload, async (req, res) => {
       };
     }
 
+    // Handle completion comment (if provided)
     if (req.body.completionComment) {
       task.completionComment = req.body.completionComment;
     }
