@@ -102,8 +102,9 @@ router.put('/:id', auth, upload, async (req, res) => {
     }
 
     if (req.body.status === 'completed' && task.status !== 'completed') {
-      task.status = 'completed';
+      task.status      = 'completed';
       task.completedAt = new Date();
+      task.completedBy = { _id: req.user.id, email: req.user.email };
       if (req.body.latitude && req.body.longitude) {
         task.location = {
           latitude: parseFloat(req.body.latitude),
