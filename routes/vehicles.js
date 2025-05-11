@@ -11,24 +11,50 @@ const upload = multer({
 });
 // get na vsetky vozidla v garazi
 router.get('/garage/:garageId', auth, async (req, res) => {
-    try {
-      const garage = await Garage.findById(req.params.garageId);
-      if (!garage) return res.status(404).json({ message: 'Garage not found' });
-  
-      // allow if they're the admin or if their user.garage matches
-      const isAdmin  = garage.admin.toString() === req.user.id;
-      const isMember = req.user.garage?.toString() === req.params.garageId;
-      if (!isAdmin && !isMember) {
-        return res.status(403).json({ message: 'Access denied' });
-      }
-  
-      const vehicles = await Vehicle.find({ garage: req.params.garageId });
-      res.json(vehicles);
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ message: 'Server error' });
+  try {
+    const garage = await Garage.findById(req.params.garageId);
+    if (!garage) return res.status(404).json({ message: 'Garage not found' });
+
+    // allow if they're the admin or if their user.garage matches
+    const isAdmin  = garage.admin.toString() === req.user.id;
+    const isMember = req.user.garage?.toString() === req.params.garageId;
+    if (!isAdmin && !isMember) {
+      return res.status(403).json({ message: 'Access denied' });
     }
-  });
+
+    const vehicles = await Vehicle.find({ garage: req.params.garageId });
+    
+    // Transform and log each vehicle's photo status
+    const transformedVehicles = vehicles.map(vehicle => {
+      const hasPhoto = !!(vehicle.photos && vehicle.photos.data && vehicle.photos.data.length > 0);
+      console.log(`Vehicle ${vehicle._id} (${vehicle.brand} ${vehicle.model}) has photo: ${hasPhoto}`);
+      if (vehicle.photos) {
+        console.log('Photo data:', {
+          hasPhotos: !!vehicle.photos,
+          hasData: !!vehicle.photos.data,
+          dataLength: vehicle.photos.data ? vehicle.photos.data.length : 0,
+          contentType: vehicle.photos.contentType
+        });
+      }
+
+      return {
+        _id: vehicle._id,
+        brand: vehicle.brand,
+        model: vehicle.model,
+        year: vehicle.year,
+        identification: vehicle.identification,
+        garage: vehicle.garage,
+        hasPhoto: hasPhoto
+      };
+    });
+    
+    res.json(transformedVehicles);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 
 // get na jedno vozidlo, vhodne pri zobrazovani informacii o vozidle 
 router.get('/garage/:garageId/vehicle/:vehicleId', auth, async (req, res) => {
@@ -63,8 +89,18 @@ router.get('/garage/:garageId/vehicle/:vehicleId/photo', auth, async (req, res) 
       return res.status(400).json({ message: 'Vehicle does not belong to this garage' });
     }
 
-    res.set('Content-Type', vehicle.photos.contentType); // Set MIME type (e.g., image/jpeg)
-    res.send(vehicle.photos.data); // Send binary image data
+    if (!vehicle.photos?.data || !vehicle.photos.data.length) {
+      console.log('Photo endpoint: No photo data found for vehicle', req.params.vehicleId);
+      return res.status(404).json({ message: 'No photo found' });
+    }
+
+    console.log('Photo endpoint: Sending photo for vehicle', req.params.vehicleId, {
+      contentType: vehicle.photos.contentType,
+      dataLength: vehicle.photos.data.length
+    });
+
+    res.set('Content-Type', vehicle.photos.contentType);
+    res.send(vehicle.photos.data);
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
   }
