@@ -6,7 +6,7 @@ const auth    = require('../middleware/auth');
 const Task    = require('../models/Task');
 const Garage  = require('../models/Garage');
 const multer  = require('multer');
-
+const { sendExpoPush } = require('../utils/expoPush');
 
 const upload = multer({ storage: multer.memoryStorage() }).array('evidence', 5);
 // GET tasks for a specific vehicle
@@ -46,8 +46,18 @@ router.post('/garage/:garageId/vehicle/:vehicleId', auth, async (req, res) => {
     });
 
     await task.save();
-    res.status(201).json(task);
-
+    const users = await User.find({
+      role: 'user',
+      garage: req.params.garageId,
+      deviceToken: { $exists: true, $ne: '' },
+    }, 'deviceToken');
+   
+    sendExpoPush(
+      users.map((u) => u.deviceToken),
+      'New task assigned',
+      task.name,
+      { taskId: task._id.toString() }
+    );
   } catch (error) {
     console.error('Server error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });

@@ -27,6 +27,12 @@ router.get('/myGarageID', auth, async (req, res) => {
     return res.status(500).json({ message: 'Server error' });
   }
 });
+// for push notifications
+router.post('/device-token', auth, async (req, res) => {
+  if (!req.body.token) return res.status(400).json({ message: 'token required' });
+  await User.findByIdAndUpdate(req.user.id, { deviceToken: req.body.token });
+  res.sendStatus(204);
+});
 /**
  * GET /api/user/profile
  * Returns user info plus a URL for the avatar if set.
