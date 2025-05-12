@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const Garage = require('../models/Garage');
+const User = require('../models/User') 
 const createInviteCode = require('./invite.js');
 // GET all garages (admin only) <- toto by som asi vymazal
 router.get('/', auth, async (req, res) => {
