@@ -2,10 +2,10 @@ const express = require('express');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const Garage = require('../models/Garage');
-const createInviteCode = require('./invite.js'); 
+const createInviteCode = require('./invite.js');
 // GET all garages (admin only) <- toto by som asi vymazal
 router.get('/', auth, async (req, res) => {
-  if (req.user.role !== 'admin') 
+  if (req.user.role !== 'admin')
     return res.status(403).json({ message: 'Access denied' });
   try {
     const garages = await Garage.find().populate('admin', 'name email');
@@ -15,9 +15,41 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
+/**
+ * GET /api/user/garage-users/:garageId
+ * Returns all users assigned to the specified garage.
+ * Accessible by users who belong to the garage or by its admin.
+ */
+router.get('/garage-users/:garageId', auth, async (req, res) => {
+  try {
+    const { garageId } = req.params;
+    const requester = await User.findById(req.user.id);
+
+    if (!requester) return res.status(404).json({ message: 'User not found' });
+
+    // Check if the user belongs to the garage or is the garage's admin
+    const isMember = requester.garage?.toString() === garageId;
+
+    // Optional: Also verify admin owns the garage
+    const isAdminOfGarage =
+        requester.role === 'admin' &&
+        (await Garage.findOne({ _id: garageId, admin: requester._id }));
+
+    if (!isMember && !isAdminOfGarage) {
+      return res.status(403).json({ message: 'Access denied to this garage' });
+    }
+
+    const users = await User.find({ garage: garageId }).select('-password');
+    res.json({ users });
+  } catch (err) {
+    console.error('Error fetching garage users:', err);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
+
 // POST create a new garage (admin only)
 router.post('/', auth, async (req, res) => {
-  if (req.user.role !== 'admin') 
+  if (req.user.role !== 'admin')
     return res.status(403).json({ message: 'Access denied' });
   const { name, location } = req.body;
   try {
@@ -67,17 +99,17 @@ router.get('/admin/me', auth, async (req, res) => {
   }
 });
 
-// POST invite 
+// POST invite
 // x-auth-token <- v headri je potrebny, v body treba {"garageId":"id"} aby sa vygeneroval kod pre garaz
 router.post('/invite', auth, async (req, res) => {
-  if (req.user.role !== 'admin') 
+  if (req.user.role !== 'admin')
     return res.status(403).json({ message: 'Access denied' });
-  
+
   const { garageId, expirationInHours } = req.body;
   if (!garageId) {
     return res.status(400).json({ message: 'garageId is required' });
   }
-  
+
   try {
     const invite = await createInviteCode(garageId, expirationInHours || 24);
     res.status(201).json({ inviteCode: invite.code, expiresAt: invite.expiresAt });
@@ -89,7 +121,7 @@ router.post('/invite', auth, async (req, res) => {
 
 // PUT update detailov garaze (admin only)
 router.patch('/:id', auth, async (req, res) => {
-  if (req.user.role !== 'admin') 
+  if (req.user.role !== 'admin')
     return res.status(403).json({ message: 'Access denied' });
 
   const { name, location } = req.body;
@@ -108,7 +140,7 @@ router.patch('/:id', auth, async (req, res) => {
     if (name) garage.name = name;
     if (location) garage.location = location;
 
- 
+
     await garage.save();
     res.json(garage);
   } catch (error) {

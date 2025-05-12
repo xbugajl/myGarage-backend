@@ -128,5 +128,28 @@ router.get('/avatar', auth, async (req, res) => {
     res.status(500).end();
   }
 });
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    const requester = await User.findById(req.user.id);
+    if (!requester || requester.role !== 'admin') {
+      return res.status(403).json({ message: 'Access denied' });
+    }
 
+    const userToDelete = await User.findById(req.params.id);
+    if (!userToDelete) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Prevent admin from deleting self
+    if (userToDelete.id === requester.id) {
+      return res.status(400).json({ message: "You can't delete yourself" });
+    }
+
+    await User.findByIdAndDelete(req.params.id);
+    return res.json({ message: 'User deleted successfully' });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: 'Server error', error: err.message });
+  }
+});
 module.exports = router;
