@@ -15,10 +15,31 @@ const inviteRoutes = require('./routes/invite.js');
 const userRoutes = require('./routes/user.js');
 const setupSocket = require('./socket/socketHandler.js');
 
-// docs
+// Swagger documentation setup
 const swaggerUi = require('swagger-ui-express');
-const YAML = require('yamljs');
+const swaggerJsdoc = require('swagger-jsdoc');
 
+// Swagger definition
+const swaggerOptions = {
+  definition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'MyGarage API',
+      version: '1.0.0',
+      description: 'A Swagger documentation for our MTAA project named MyGarage'
+    },
+    servers: [
+      {
+        url: 'http://localhost:5000',
+        description: 'Local dev server'
+      }
+    ]
+  },
+  apis: ['./routes/*.js', './models/*.js'] // Path to the API docs
+};
+
+// Initialize swagger-jsdoc
+const swaggerSpec = swaggerJsdoc(swaggerOptions);
 
 const app = express();
 const server = http.createServer(app);
@@ -43,8 +64,8 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/invite', inviteRoutes);
 app.use('/api/user', userRoutes);
 
-const swaggerDocument = YAML.load('./swagger.yaml');
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+// Serve Swagger UI
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 
 

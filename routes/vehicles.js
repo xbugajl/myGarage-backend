@@ -9,7 +9,54 @@ const upload = multer({
   storage: multer.memoryStorage(),
   limits:  { fileSize: 8 * 1024 * 1024 }, // 8 MB guard
 });
-// get na vsetky vozidla v garazi
+/**
+ * @swagger
+ * /api/vehicles/garage/{garageId}:
+ *   get:
+ *     summary: Get all vehicles in a garage
+ *     description: Retrieve all vehicles belonging to a specific garage. Accessible by garage admin or members.
+ *     tags:
+ *       - Vehicles
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: garageId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the garage
+ *     responses:
+ *       200:
+ *         description: List of vehicles in the garage
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   _id:
+ *                     type: string
+ *                   brand:
+ *                     type: string
+ *                   model:
+ *                     type: string
+ *                   year:
+ *                     type: number
+ *                   identification:
+ *                     type: string
+ *                   garage:
+ *                     type: string
+ *                   hasPhoto:
+ *                     type: boolean
+ *       403:
+ *         description: Access denied
+ *       404:
+ *         description: Garage not found
+ *       500:
+ *         description: Server error
+ */
 router.get('/garage/:garageId', auth, async (req, res) => {
   try {
     const garage = await Garage.findById(req.params.garageId);
@@ -57,6 +104,45 @@ router.get('/garage/:garageId', auth, async (req, res) => {
 
 
 // get na jedno vozidlo, vhodne pri zobrazovani informacii o vozidle 
+/**
+ * @swagger
+ * /api/vehicles/garage/{garageId}/vehicle/{vehicleId}:
+ *   get:
+ *     summary: Get vehicle details
+ *     description: Get detailed information about a specific vehicle in a garage
+ *     tags:
+ *       - Vehicles
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: garageId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the garage
+ *       - in: path
+ *         name: vehicleId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the vehicle
+ *     responses:
+ *       200:
+ *         description: Vehicle details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Vehicle'
+ *       403:
+ *         description: Access denied
+ *       404:
+ *         description: Garage or vehicle not found
+ *       400:
+ *         description: Vehicle does not belong to this garage
+ *       500:
+ *         description: Server error
+ */
 router.get('/garage/:garageId/vehicle/:vehicleId', auth, async (req, res) => {
   try {
     const garage = await Garage.findById(req.params.garageId);
@@ -76,6 +162,46 @@ router.get('/garage/:garageId/vehicle/:vehicleId', auth, async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/vehicles/garage/{garageId}/vehicle/{vehicleId}/photo:
+ *   get:
+ *     summary: Get vehicle photo
+ *     description: Get the photo of a specific vehicle
+ *     tags:
+ *       - Vehicles
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: garageId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the garage
+ *       - in: path
+ *         name: vehicleId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the vehicle
+ *     responses:
+ *       200:
+ *         description: Vehicle photo
+ *         content:
+ *           image/*:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *       403:
+ *         description: Access denied
+ *       404:
+ *         description: Garage, vehicle, or photo not found
+ *       400:
+ *         description: Vehicle does not belong to this garage
+ *       500:
+ *         description: Server error
+ */
 router.get('/garage/:garageId/vehicle/:vehicleId/photo', auth, async (req, res) => {
   try {
     const garage = await Garage.findById(req.params.garageId);
@@ -106,6 +232,59 @@ router.get('/garage/:garageId/vehicle/:vehicleId/photo', auth, async (req, res) 
   }
 });
 
+/**
+ * @swagger
+ * /api/vehicles/garage/{garageId}:
+ *   post:
+ *     summary: Add new vehicle
+ *     description: Add a new vehicle to a garage with photo
+ *     tags:
+ *       - Vehicles
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: garageId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the garage
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - brand
+ *               - model
+ *               - year
+ *               - identification
+ *               - photos
+ *             properties:
+ *               brand:
+ *                 type: string
+ *               model:
+ *                 type: string
+ *               year:
+ *                 type: number
+ *               identification:
+ *                 type: string
+ *               photos:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       201:
+ *         description: Vehicle created successfully
+ *       400:
+ *         description: No photo uploaded or invalid input
+ *       403:
+ *         description: Access denied
+ *       404:
+ *         description: Garage not found
+ *       500:
+ *         description: Server error
+ */
 router.post(
     '/garage/:garageId',
     auth,
@@ -150,6 +329,41 @@ router.post(
 );
 
 
+/**
+ * @swagger
+ * /api/vehicles/garage/{garageId}/vehicle/{vehicleId}:
+ *   delete:
+ *     summary: Delete vehicle
+ *     description: Delete a vehicle from a garage
+ *     tags:
+ *       - Vehicles
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: garageId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the garage
+ *       - in: path
+ *         name: vehicleId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the vehicle
+ *     responses:
+ *       200:
+ *         description: Vehicle deleted successfully
+ *       403:
+ *         description: Access denied
+ *       404:
+ *         description: Garage or vehicle not found
+ *       400:
+ *         description: Vehicle does not belong to this garage
+ *       500:
+ *         description: Server error
+ */
 router.delete('/garage/:garageId/vehicle/:vehicleId', auth, async (req, res) => {
   try {
     // kontrola ci garaz existuje
@@ -179,6 +393,63 @@ router.delete('/garage/:garageId/vehicle/:vehicleId', auth, async (req, res) => 
   }
 });
 
+/**
+ * @swagger
+ * /api/vehicles/garage/{garageId}/vehicle/{vehicleId}:
+ *   put:
+ *     summary: Update vehicle
+ *     description: Update vehicle details and optionally its photo
+ *     tags:
+ *       - Vehicles
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: garageId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the garage
+ *       - in: path
+ *         name: vehicleId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the vehicle
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               brand:
+ *                 type: string
+ *               model:
+ *                 type: string
+ *               year:
+ *                 type: number
+ *               identification:
+ *                 type: string
+ *               photos:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Vehicle updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Vehicle'
+ *       403:
+ *         description: Access denied
+ *       404:
+ *         description: Garage or vehicle not found
+ *       400:
+ *         description: Vehicle does not belong to this garage
+ *       500:
+ *         description: Server error
+ */
 router.put('/garage/:garageId/vehicle/:vehicleId', auth, async (req, res) => {
   const { brand, model, year, identification , photos } = req.body;
   try {

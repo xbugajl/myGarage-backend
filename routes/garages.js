@@ -4,7 +4,30 @@ const auth = require('../middleware/auth');
 const Garage = require('../models/Garage');
 const User = require('../models/User') 
 const createInviteCode = require('./invite.js');
-// GET all garages (admin only) <- toto by som asi vymazal
+/**
+ * @swagger
+ * /api/garages:
+ *   get:
+ *     summary: Get all garages
+ *     description: Retrieve all garages. Only accessible by admin.
+ *     tags:
+ *       - Garages
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of all garages
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Garage'
+ *       403:
+ *         description: Access denied
+ *       500:
+ *         description: Server error
+ */
 router.get('/', auth, async (req, res) => {
   if (req.user.role !== 'admin')
     return res.status(403).json({ message: 'Access denied' });
@@ -20,6 +43,42 @@ router.get('/', auth, async (req, res) => {
  * GET /api/user/garage-users/:garageId
  * Returns all users assigned to the specified garage.
  * Accessible by users who belong to the garage or by its admin.
+ */
+/**
+ * @swagger
+ * /api/garages/garage-users/{garageId}:
+ *   get:
+ *     summary: Get garage users
+ *     description: Get all users assigned to a specific garage. Accessible by garage members or admin.
+ *     tags:
+ *       - Garages
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: garageId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Garage ID
+ *     responses:
+ *       200:
+ *         description: List of garage users
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 users:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/User'
+ *       403:
+ *         description: Access denied
+ *       404:
+ *         description: User not found
+ *       500:
+ *         description: Server error
  */
 router.get('/garage-users/:garageId', auth, async (req, res) => {
   try {
@@ -49,6 +108,42 @@ router.get('/garage-users/:garageId', auth, async (req, res) => {
 });
 
 // POST create a new garage (admin only)
+/**
+ * @swagger
+ * /api/garages:
+ *   post:
+ *     summary: Create a new garage
+ *     description: Create a new garage. Only accessible by admin.
+ *     tags:
+ *       - Garages
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - location
+ *             properties:
+ *               name:
+ *                 type: string
+ *               location:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Garage created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Garage'
+ *       403:
+ *         description: Access denied
+ *       500:
+ *         description: Server error
+ */
 router.post('/', auth, async (req, res) => {
   if (req.user.role !== 'admin')
     return res.status(403).json({ message: 'Access denied' });
@@ -63,6 +158,37 @@ router.post('/', auth, async (req, res) => {
 });
 
 // GET garageId, toto by som upravil co by iba admin tej garaze a useri tej garaze mali k nej pristup !DONE!
+/**
+ * @swagger
+ * /api/garages/{id}:
+ *   get:
+ *     summary: Get garage by ID
+ *     description: Get details of a specific garage. Only accessible by garage members or admin.
+ *     tags:
+ *       - Garages
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Garage ID
+ *     responses:
+ *       200:
+ *         description: Garage details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Garage'
+ *       403:
+ *         description: Access denied
+ *       404:
+ *         description: Garage not found
+ *       500:
+ *         description: Server error
+ */
 router.get('/:id', auth, async (req, res) => {
   try {
     const garage = await Garage.findById(req.params.id).populate('admin', 'name email');
@@ -78,6 +204,35 @@ router.get('/:id', auth, async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/garages/admin/me:
+ *   get:
+ *     summary: Get admin's garages
+ *     description: Get all garages where the authenticated user is the admin
+ *     tags:
+ *       - Garages
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of admin's garages
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 garages:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Garage'
+ *       403:
+ *         description: Access denied
+ *       500:
+ *         description: Server error
+ */
 router.get('/admin/me', auth, async (req, res) => {
   if (req.user.role !== 'admin') {
     return res.status(403).json({ message: 'Access denied: Admin role required' });
@@ -102,6 +257,50 @@ router.get('/admin/me', auth, async (req, res) => {
 
 // POST invite
 // x-auth-token <- v headri je potrebny, v body treba {"garageId":"id"} aby sa vygeneroval kod pre garaz
+/**
+ * @swagger
+ * /api/garages/invite:
+ *   post:
+ *     summary: Generate invite code for garage
+ *     description: Generate an invite code for a specific garage. Only accessible by admin.
+ *     tags:
+ *       - Garages
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - garageId
+ *             properties:
+ *               garageId:
+ *                 type: string
+ *               expirationInHours:
+ *                 type: number
+ *                 default: 24
+ *     responses:
+ *       201:
+ *         description: Invite code generated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 inviteCode:
+ *                   type: string
+ *                 expiresAt:
+ *                   type: string
+ *                   format: date-time
+ *       400:
+ *         description: garageId is required
+ *       403:
+ *         description: Access denied
+ *       500:
+ *         description: Server error
+ */
 router.post('/invite', auth, async (req, res) => {
   if (req.user.role !== 'admin')
     return res.status(403).json({ message: 'Access denied' });
@@ -121,6 +320,48 @@ router.post('/invite', auth, async (req, res) => {
 });
 
 // PUT update detailov garaze (admin only)
+/**
+ * @swagger
+ * /api/garages/{id}:
+ *   patch:
+ *     summary: Update garage details
+ *     description: Update name or location of a garage. Only accessible by garage admin.
+ *     tags:
+ *       - Garages
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Garage ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               location:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Garage updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Garage'
+ *       403:
+ *         description: Access denied
+ *       404:
+ *         description: Garage not found
+ *       500:
+ *         description: Server error
+ */
 router.patch('/:id', auth, async (req, res) => {
   if (req.user.role !== 'admin')
     return res.status(403).json({ message: 'Access denied' });

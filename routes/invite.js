@@ -31,7 +31,58 @@ async function createInviteCode(garageId, expirationInHours = 24) {
   }
 }
 
-// POST /api/invite - generate an invite code for a given garage and send email
+/**
+ * @swagger
+ * /api/invite:
+ *   post:
+ *     summary: Generate invite code
+ *     description: Generate an invite code for a garage and send it via email. Only accessible by admin.
+ *     tags:
+ *       - Invite
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - garageId
+ *               - email
+ *             properties:
+ *               garageId:
+ *                 type: string
+ *                 description: ID of the garage to generate invite code for
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 description: Email address to send the invite code to
+ *     responses:
+ *       201:
+ *         description: Invite code generated and email sent
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 code:
+ *                   type: string
+ *                   description: Generated invite code
+ *                 expiresAt:
+ *                   type: string
+ *                   format: date-time
+ *                   description: Expiration time of the invite code
+ *                 message:
+ *                   type: string
+ *                   description: Success message
+ *       400:
+ *         description: Missing required fields
+ *       403:
+ *         description: Access denied - not an admin
+ *       500:
+ *         description: Server error
+ */
 router.post('/', auth, async (req, res) => {
   // Only allow admins to generate invite codes
   if (req.user.role !== 'admin') {
@@ -64,7 +115,54 @@ router.post('/', auth, async (req, res) => {
   }
 });
 
-// POST /api/invite/verify - verify an invite code
+/**
+ * @swagger
+ * /api/invite/verify:
+ *   post:
+ *     summary: Verify invite code
+ *     description: Verify if an invite code is valid and not expired
+ *     tags:
+ *       - Invite
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - code
+ *             properties:
+ *               code:
+ *                 type: string
+ *                 description: Invite code to verify
+ *     responses:
+ *       200:
+ *         description: Invite code verified successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   description: Success message
+ *                 garageId:
+ *                   type: string
+ *                   description: ID of the garage this invite code is for
+ *                 code:
+ *                   type: string
+ *                   description: The verified invite code
+ *                 expiresAt:
+ *                   type: string
+ *                   format: date-time
+ *                   description: When the invite code expires
+ *       400:
+ *         description: Invalid, used, or expired invite code
+ *       500:
+ *         description: Server error
+ */
 router.post('/verify', auth, async (req, res) => {
   const { code } = req.body;
 

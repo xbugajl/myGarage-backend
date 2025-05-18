@@ -6,6 +6,45 @@ const User = require('../models/User');
 const auth = require('../middleware/auth');
 const InviteCode = require('../models/InviteCode');
 
+/**
+ * @swagger
+ * /api/auth/login:
+ *   post:
+ *     summary: Login a user
+ *     description: Verify user credentials (email & password) and return a JWT if valid
+ *     tags:
+ *       - Auth
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               password:
+ *                 type: string
+ *                 format: password
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 token:
+ *                   type: string
+ *       400:
+ *         description: Invalid credentials
+ *       500:
+ *         description: Server error
+ */
 router.post('/login',  async (req, res) => {
   const { email, password } = req.body;
   try {
@@ -32,6 +71,51 @@ router.post('/login',  async (req, res) => {
 });
 
 
+/**
+ * @swagger
+ * /api/auth/register:
+ *   post:
+ *     summary: Register a new user
+ *     description: Register a new user with optional invite code. Without invite code registers as admin, with invite code as user.
+ *     tags:
+ *       - Auth
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - email
+ *               - password
+ *             properties:
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               password:
+ *                 type: string
+ *                 format: password
+ *               inviteCode:
+ *                 type: string
+ *                 description: Required for registering as a user, not required for admin
+ *     responses:
+ *       201:
+ *         description: User successfully registered
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: User already exists or invalid invite code
+ *       500:
+ *         description: Server error
+ */
 router.post('/register', async (req, res) => {
   const { name, email, password, inviteCode } = req.body; // inviteCode for admin-generated invites
   try {
@@ -68,6 +152,40 @@ router.post('/register', async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/auth/validate-invite:
+ *   post:
+ *     summary: Validate an invite code
+ *     description: Check if an invite code is valid and not expired
+ *     tags:
+ *       - Auth
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - code
+ *             properties:
+ *               code:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Invite code is valid
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: Invalid or expired invite code
+ *       500:
+ *         description: Server error
+ */
 router.post('/validate-invite', async (req, res) => {
   const { code } = req.body;
   if (!code) return res.status(400).json({ message: 'Invite code required' });

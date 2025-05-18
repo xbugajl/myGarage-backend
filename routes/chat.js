@@ -3,7 +3,47 @@ const router = express.Router();
 const auth = require('../middleware/auth');
 const mongoose = require('mongoose');
 const ChatMessage = require('../models/ChatMessage');
-//ziskavanie historie sprav garaze konkretnej
+/**
+ * @swagger
+ * /api/chat/garage/{garageId}:
+ *   get:
+ *     summary: Get garage chat history
+ *     description: Retrieve the last 50 chat messages for a specific garage
+ *     tags:
+ *       - Chat
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: garageId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the garage
+ *     responses:
+ *       200:
+ *         description: List of chat messages
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 allOf:
+ *                   - $ref: '#/components/schemas/ChatMessage'
+ *                   - type: object
+ *                     properties:
+ *                       sender:
+ *                         type: object
+ *                         properties:
+ *                           name:
+ *                             type: string
+ *                           email:
+ *                             type: string
+ *       400:
+ *         description: Invalid garage ID
+ *       500:
+ *         description: Server error
+ */
 router.get('/garage/:garageId', auth, async (req, res) => {
   try {
     const garageId = req.params.garageId;

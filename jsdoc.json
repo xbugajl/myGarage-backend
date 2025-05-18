@@ -1,0 +1,18 @@
+{
+    "source": {
+        "include": ["./routes", "./models", "./middleware", "./utils", "./socket", "./config", "server.js"],
+        "exclude": ["node_modules"],
+        "includePattern": ".+\\.js(doc|x)?$",
+        "excludePattern": "(^|\\/|\\\\)_"
+    },
+    "opts": {
+        "destination": "./docs",
+        "recurse": true,
+        "readme": "./README.md"
+    },
+    "plugins": [],
+    "templates": {
+        "cleverLinks": false,
+        "monospaceLinks": false
+    }
+}

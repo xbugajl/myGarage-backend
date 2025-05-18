@@ -10,7 +10,35 @@ const { sendExpoPush } = require('../utils/expoPush');
 const User = require('../models/User');
 
 const upload = multer({ storage: multer.memoryStorage() }).array('evidence', 5);
-// GET tasks for a specific vehicle
+/**
+ * @swagger
+ * /api/tasks/vehicle/{vehicleId}:
+ *   get:
+ *     summary: Get vehicle tasks
+ *     description: Get all tasks for a specific vehicle, sorted by due date
+ *     tags:
+ *       - Tasks
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: vehicleId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the vehicle
+ *     responses:
+ *       200:
+ *         description: List of tasks
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Task'
+ *       500:
+ *         description: Server error
+ */
 router.get('/vehicle/:vehicleId', auth, async (req, res) => {
   try {
     const tasks = await Task
@@ -22,7 +50,64 @@ router.get('/vehicle/:vehicleId', auth, async (req, res) => {
   }
 });
 
-// POST – create a new task (admin only)
+/**
+ * @swagger
+ * /api/tasks/garage/{garageId}/vehicle/{vehicleId}:
+ *   post:
+ *     summary: Create new task
+ *     description: Create a new task for a vehicle. Only accessible by garage admin.
+ *     tags:
+ *       - Tasks
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: garageId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the garage
+ *       - in: path
+ *         name: vehicleId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the vehicle
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - description
+ *               - dueDate
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: Name of the task
+ *               description:
+ *                 type: string
+ *                 description: Detailed description of the task
+ *               dueDate:
+ *                 type: string
+ *                 format: date-time
+ *                 description: When the task is due
+ *     responses:
+ *       201:
+ *         description: Task created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Task'
+ *       400:
+ *         description: Missing required fields
+ *       403:
+ *         description: Access denied - not an admin
+ *       500:
+ *         description: Server error
+ */
 router.post('/garage/:garageId/vehicle/:vehicleId', auth, async (req, res) => {
   const { name, description, dueDate } = req.body;
   if (!name || !description || !dueDate) {
@@ -65,7 +150,45 @@ router.post('/garage/:garageId/vehicle/:vehicleId', auth, async (req, res) => {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
-// Get a single task by ID
+/**
+ * @swagger
+ * /api/tasks/{id}:
+ *   get:
+ *     summary: Get task by ID
+ *     description: Get detailed information about a specific task
+ *     tags:
+ *       - Tasks
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the task
+ *     responses:
+ *       200:
+ *         description: Task details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/Task'
+ *                 - type: object
+ *                   properties:
+ *                     vehicle:
+ *                       type: object
+ *                       properties:
+ *                         brand:
+ *                           type: string
+ *                         model:
+ *                           type: string
+ *       404:
+ *         description: Task not found
+ *       500:
+ *         description: Server error
+ */
 router.get('/:id', auth, async (req, res) => {
   try {
     const task = await Task.findById(req.params.id)
@@ -78,7 +201,75 @@ router.get('/:id', auth, async (req, res) => {
   }
 });
 
-// Edit a task (restricted to admins)
+/**
+ * @swagger
+ * /api/tasks/{id}:
+ *   put:
+ *     summary: Update task
+ *     description: Update a task's details. Only accessible by admin.
+ *     tags:
+ *       - Tasks
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the task
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: Updated task name
+ *               description:
+ *                 type: string
+ *                 description: Updated task description
+ *               dueDate:
+ *                 type: string
+ *                 format: date-time
+ *                 description: Updated due date
+ *               status:
+ *                 type: string
+ *                 enum: [pending, completed]
+ *                 description: Updated task status
+ *               evidence:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: binary
+ *                 description: Evidence images (up to 5)
+ *               latitude:
+ *                 type: number
+ *                 description: Latitude where task was completed
+ *               longitude:
+ *                 type: number
+ *                 description: Longitude where task was completed
+ *     responses:
+ *       200:
+ *         description: Task updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 task:
+ *                   $ref: '#/components/schemas/Task'
+ *       403:
+ *         description: Access denied - not an admin
+ *       404:
+ *         description: Task not found
+ *       500:
+ *         description: Server error
+ */
 router.put('/:id', auth, upload, async (req, res) => {
   try {
     const task = await Task.findById(req.params.id);
@@ -128,6 +319,63 @@ router.put('/:id', auth, upload, async (req, res) => {
 
 
 
+/**
+ * @swagger
+ * /api/tasks/{id}/complete:
+ *   patch:
+ *     summary: Complete task
+ *     description: Mark a task as completed with optional evidence, location, and comment
+ *     tags:
+ *       - Tasks
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the task
+ *     requestBody:
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               evidence:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: binary
+ *                 description: Evidence images (up to 5)
+ *               latitude:
+ *                 type: number
+ *                 description: Latitude where task was completed
+ *               longitude:
+ *                 type: number
+ *                 description: Longitude where task was completed
+ *               completionComment:
+ *                 type: string
+ *                 description: Comment about task completion
+ *     responses:
+ *       200:
+ *         description: Task marked as completed
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 task:
+ *                   $ref: '#/components/schemas/Task'
+ *       403:
+ *         description: Access denied
+ *       404:
+ *         description: Task not found
+ *       500:
+ *         description: Server error
+ */
 router.patch('/:id/complete', auth, upload, async (req, res) => {
   try {
     const task = await Task.findById(req.params.id).populate({
@@ -187,7 +435,40 @@ router.patch('/:id/complete', auth, upload, async (req, res) => {
   }
 });
 
-// Delete a task (restricted to admins)
+/**
+ * @swagger
+ * /api/tasks/{id}:
+ *   delete:
+ *     summary: Delete task
+ *     description: Delete a task. Only accessible by admin.
+ *     tags:
+ *       - Tasks
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the task
+ *     responses:
+ *       200:
+ *         description: Task deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       403:
+ *         description: Access denied - not an admin
+ *       404:
+ *         description: Task not found
+ *       500:
+ *         description: Server error
+ */
 router.delete('/:id', auth, async (req, res) => {
   try {
     const task = await Task.findById(req.params.id);
